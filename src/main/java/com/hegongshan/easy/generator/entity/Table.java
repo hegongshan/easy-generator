@@ -1,11 +1,11 @@
 package com.hegongshan.easy.generator.entity;
 
-import java.util.Map;
+import java.util.Set;
 
 public class Table {
 	private String tableName;
-	Map<String, String> columns; //Map<columnName,columnType>
-	//private Column column;
+
+	private Set<Column> columns;
 
 	public String getTableName() {
 		return tableName;
@@ -15,11 +15,12 @@ public class Table {
 		this.tableName = tableName;
 	}
 
-	public Map<String, String> getColumns() {
+	public Set<Column> getColumns() {
 		return columns;
 	}
 
-	public void setColumns(Map<String, String> columns) {
+	public void setColumns(Set<Column> columns) {
 		this.columns = columns;
 	}
+	
 }

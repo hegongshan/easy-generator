@@ -13,8 +13,15 @@ public final class FileUtil {
 	 * @param content 实体类的内容
 	 */
 	public static void write(String packageName,String fileName,String content) {
+		File fileTest = new File("src/main/java");
+		String basePath;
+		if(fileTest.exists()) {
+			basePath = "src/main/java/";
+		} else {
+			basePath = "src/";
+		}
 		String filePath = packageName.replace(".", "/");
-		File file = new File("src/"+filePath+File.separator+fileName);
+		File file = new File(basePath+filePath+File.separator+fileName);
 		if(!file.getParentFile().exists()) {
 			file.getParentFile().mkdirs();
 		}
@@ -24,7 +31,7 @@ public final class FileUtil {
 			out.write(content);
 			out.flush();
 		} catch (IOException e) {
-			new RuntimeException("[easy]-写文件异常",e);
+			new RuntimeException("[easy-generator]-写文件异常",e);
 		} finally {
 			try {
 				out.close();

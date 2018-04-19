@@ -1,14 +1,17 @@
-package com.hegongshan.easy.generator;
+package com.hegongshan.easy.generator.parser;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
+import com.hegongshan.easy.generator.Constants;
+import com.hegongshan.easy.generator.entity.Column;
 import com.hegongshan.easy.generator.entity.Table;
 import com.hegongshan.easy.generator.util.JdbcUtil;
+import com.hegongshan.easy.generator.util.PropertiesUtil;
 import com.hegongshan.easy.generator.util.StringUtil;
 
 public class DatabaseParser {
@@ -18,26 +21,38 @@ public class DatabaseParser {
 		try {
 			init();
 		} catch (Exception e) {
-			new RuntimeException("[easy-generator] 数据库解析异常",e);
+			new RuntimeException("[easy-generator]-数据库解析异常",e);
 		}
 	}
 	
 	private void init() throws Exception {
-		DatabaseMetaData mdm = JdbcUtil.getConnection().getMetaData();
-		ResultSet tableRS = mdm.getTables(null, null, "%", new String[]{"TABLE"});
+		DatabaseMetaData dmd = JdbcUtil.getConnection().getMetaData();
+		
+		String tableNamePattern = null;
+		
+		PropertiesUtil prop = new PropertiesUtil(Constants.DEFAULT_PROPERTIES);
+		String tableNames = prop.getProperty("table");
+		if(StringUtil.isEmpty(tableNames) || tableNames.equals("*") || tableNames.equals("%")) 
+			tableNamePattern = "%";
+		else {
+			tableNamePattern = tableNames;
+		}
+		ResultSet tableRS = dmd.getTables(null, null, tableNamePattern, new String[]{"TABLE"});
 		int totalTable = tableRS.getMetaData().getColumnCount();
 		tables = new ArrayList<Table>(totalTable);
 		while(tableRS.next()) {
 			Table table = new Table();
 			String dbTable = tableRS.getString("TABLE_NAME");
-			ResultSet columnRS = mdm.getColumns(null, null, dbTable , "%");
-			table.setTableName(StringUtil.toJavaStyle(dbTable));
+			ResultSet columnRS = dmd.getColumns(null, null, dbTable , "%");
+			table.setTableName(dbTable);
 
-			Map<String,String> columns = new HashMap<String,String>();
+			Set<Column> columns = new LinkedHashSet<Column>();
 			while(columnRS.next()) {
-				columns.put(StringUtil.toJavaStyle(columnRS.getString("COLUMN_NAME")),TypeConvertor.toJavaType(columnRS.getString("TYPE_NAME").toLowerCase()));
+				Column column = new Column();
+				column.setColumnType(columnRS.getString("TYPE_NAME").toLowerCase());
+				column.setColumnName(columnRS.getString("COLUMN_NAME"));
+				columns.add(column);
 			}
-			
 			table.setColumns(columns);
 			tables.add(table);
 		}
