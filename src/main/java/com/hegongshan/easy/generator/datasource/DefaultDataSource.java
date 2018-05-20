@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
-import com.hegongshan.easy.generator.util.PropertiesUtil;
+import com.hegongshan.easy.generator.util.PropertiesUtils;
 
 public class DefaultDataSource implements DataSource {
 	
@@ -25,7 +25,7 @@ public class DefaultDataSource implements DataSource {
 	private String password;
 	
 	public DefaultDataSource(String propertiesName,boolean pooled) {
-		PropertiesUtil prop = new PropertiesUtil(propertiesName);
+		PropertiesUtils prop = new PropertiesUtils(propertiesName);
 		driverClassName = prop.getProperty("driverClassName");
 		url = prop.getProperty("url");
 		username = prop.getProperty("username");

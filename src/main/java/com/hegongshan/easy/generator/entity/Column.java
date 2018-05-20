@@ -2,7 +2,8 @@ package com.hegongshan.easy.generator.entity;
 
 public class Column implements Comparable<Column> {
 	private String columnName;
-	private String columnType;
+	private int columnType;
+	private String remarks;
 
 	public String getColumnName() {
 		return columnName;
@@ -12,20 +13,29 @@ public class Column implements Comparable<Column> {
 		this.columnName = columnName;
 	}
 
-	public String getColumnType() {
+	public int getColumnType() {
 		return columnType;
 	}
 
-	public void setColumnType(String columnType) {
+	public void setColumnType(int columnType) {
 		this.columnType = columnType;
 	}
 
+	public String getRemarks() {
+		return remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		this.remarks = remarks;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((columnName == null) ? 0 : columnName.hashCode());
-		result = prime * result + ((columnType == null) ? 0 : columnType.hashCode());
+		result = prime * result + columnType;
+		result = prime * result + ((remarks == null) ? 0 : remarks.hashCode());
 		return result;
 	}
 
@@ -43,10 +53,12 @@ public class Column implements Comparable<Column> {
 				return false;
 		} else if (!columnName.equals(other.columnName))
 			return false;
-		if (columnType == null) {
-			if (other.columnType != null)
+		if (columnType != other.columnType)
+			return false;
+		if (remarks == null) {
+			if (other.remarks != null)
 				return false;
-		} else if (!columnType.equals(other.columnType))
+		} else if (!remarks.equals(other.remarks))
 			return false;
 		return true;
 	}

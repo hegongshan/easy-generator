@@ -10,35 +10,38 @@ import com.hegongshan.easy.generator.entity.Field;
 import com.hegongshan.easy.generator.entity.Table;
 import com.hegongshan.easy.generator.parser.DatabaseParser;
 import com.hegongshan.easy.generator.support.spring.jdbctemplate.RowMapperGenerator;
-import com.hegongshan.easy.generator.util.FileUtil;
-import com.hegongshan.easy.generator.util.PropertiesUtil;
-import com.hegongshan.easy.generator.util.StringUtil;
+import com.hegongshan.easy.generator.util.FileUtils;
+import com.hegongshan.easy.generator.util.PropertiesUtils;
+import com.hegongshan.easy.generator.util.StringUtils;
 
 public class Generator {
 
 	private static final Logger LOG = Logger.getLogger(Generator.class.getName());
 	
-	private static PropertiesUtil prop = new PropertiesUtil(Constants.DEFAULT_PROPERTIES);
+	private static PropertiesUtils prop = new PropertiesUtils(Constants.DEFAULT_PROPERTIES);
 	
 	private static String entityPackage = prop.getProperty("entityPackage");
 
 	private static String rowMapperPackage = prop.getProperty("rowMapperPackage");
 	
+	private static String ignoreComment = prop.getProperty("ignoreComment");
+	
 	public static void generate() {
 		List<Table> tables = new DatabaseParser().getTables();
 		
 		boolean generateRowMapper = false;
-		if(StringUtil.isNotEmpty(rowMapperPackage))
+		if(StringUtils.isNotEmpty(rowMapperPackage)) {
 			generateRowMapper = true;
+		}
 		for (Table table : tables) {
 			String entityName = TableConverter.toJavaEntityName(table.getTableName());
 			LOG.info("[easy-generator] 开始写" + entityName + ".java");
-			FileUtil.write(entityPackage, entityName + ".java",
+			FileUtils.write(entityPackage, entityName + ".java",
 					createEntityContent(table));
 			if(generateRowMapper) {
 				LOG.info("[easy-generator] 开始写" + entityName + "RowMapper.java");
 				String rowMapperFileName = entityName + "RowMapper.java";
-				FileUtil.write(rowMapperPackage,
+				FileUtils.write(rowMapperPackage,
 						rowMapperFileName,
 						RowMapperGenerator.createRowMapperContent(rowMapperPackage, entityPackage, table));
 			}
@@ -46,10 +49,17 @@ public class Generator {
 	}
 
 	private static String createEntityContent(Table table) {
-		String className = StringUtil.firstToUpperCase(StringUtil.toJavaStyle(table.getTableName()));
+		boolean ignoreComment = false;
+		if(StringUtils.isNotEmpty(Generator.ignoreComment) && Generator.ignoreComment.equals("true")) {
+			ignoreComment = true;
+		}
+		String className = StringUtils.firstToUpperCase(StringUtils.toJavaStyle(table.getTableName()));
 		StringBuilder content = new StringBuilder();
 		content.append("package " + entityPackage + ";\n");
 		content.append("\n");
+		if(!ignoreComment && StringUtils.isNotEmpty(table.getRemarks())) {
+			content.append("//" + table.getRemarks() + "\n");
+		}
 		content.append("public class " + className + " implements java.io.Serializable {\n");
 		content.append("\n");
 		content.append("	private static final long serialVersionUID = 1L;\n");
@@ -59,21 +69,41 @@ public class Generator {
 		Field field;
 		for(Column column : columns) {
 			field = TableConverter.toJavaField(column);
-			content.append("	private " + field.getFieldType() + " " + field.getFieldName() + ";\n");
+			if(!ignoreComment && StringUtils.isNotEmpty(column.getRemarks())) {
+				content.append("	//" + column.getRemarks() + "\n");
+			}
+			if(column.getColumnName().startsWith("is_")) {
+				content.append("	private " + field.getFieldType() + " " + StringUtils.firstToLowerCase(field.getFieldName().substring(2)) + ";\n");
+			} else {
+				content.append("	private " + field.getFieldType() + " " + field.getFieldName() + ";\n");
+			}
 		}
 		content.append("\n");
 		
 		for(Column column : columns) {
 			field = TableConverter.toJavaField(column);
-			content.append("	public " + field.getFieldType() + " get" + StringUtil.firstToUpperCase(field.getFieldName()) + " () {\n");
-			content.append("		return " + field.getFieldName() + ";\n");
-			content.append("	}\n");
-			content.append("\n");
-			content.append("	public void set" + StringUtil.firstToUpperCase(field.getFieldName()) + "("
-					+ field.getFieldType() + " " + field.getFieldName() + ")" + " {\n");
-			content.append("		this." + field.getFieldName() + " = " + field.getFieldName() + ";\n");
-			content.append("	}\n");
-			content.append("\n");
+			if(column.getColumnName().startsWith("is_")) {
+				String fieldName = StringUtils.firstToLowerCase(field.getFieldName().substring(2));
+				content.append("	public " + field.getFieldType() + " get" + StringUtils.firstToUpperCase(fieldName) + "() {\n");
+				content.append("		return " + fieldName + ";\n");
+				content.append("	}\n");
+				content.append("\n");
+				content.append("	public void " + field.getFieldName() + "("
+						+ field.getFieldType() + " " + fieldName + ")" + " {\n");
+				content.append("		this." + fieldName + " = " + fieldName + ";\n");
+				content.append("	}\n");
+				content.append("\n");
+			} else {
+				content.append("	public " + field.getFieldType() + " get" + StringUtils.firstToUpperCase(field.getFieldName()) + "() {\n");
+				content.append("		return " + field.getFieldName() + ";\n");
+				content.append("	}\n");
+				content.append("\n");
+				content.append("	public void set" + StringUtils.firstToUpperCase(field.getFieldName()) + "("
+						+ field.getFieldType() + " " + field.getFieldName() + ")" + " {\n");
+				content.append("		this." + field.getFieldName() + " = " + field.getFieldName() + ";\n");
+				content.append("	}\n");
+				content.append("\n");
+			}
 		}
 		
 		//return "Article [articleTitle=" + articleTitle + 
@@ -86,9 +116,16 @@ public class Generator {
 			field = TableConverter.toJavaField(column);
 			if(count != 1)
 				content.append(" + \", ");
-			content.append(field.getFieldName()).
-					append("=\" + ").
-					append(field.getFieldName());
+			if(column.getColumnName().startsWith("is_")) {
+				String fieldName = StringUtils.firstToLowerCase(field.getFieldName().substring(2));
+				content.append(fieldName)
+					   .append("=\" + ")
+					   .append(fieldName);
+			} else {
+				content.append(field.getFieldName())
+					   .append("=\" + ")
+					   .append(field.getFieldName());
+			}
 			if(count % 3 == 0)
 				content.append("\n			");
 			count++;

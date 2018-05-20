@@ -4,14 +4,14 @@ import com.hegongshan.easy.generator.converter.TableConverter;
 import com.hegongshan.easy.generator.entity.Column;
 import com.hegongshan.easy.generator.entity.Field;
 import com.hegongshan.easy.generator.entity.Table;
-import com.hegongshan.easy.generator.util.StringUtil;
+import com.hegongshan.easy.generator.util.StringUtils;
 
 public class RowMapperGenerator {
 	
 	public static String createRowMapperContent(String rowMapperPackage,String entityPackage,Table table) {
 
 		String entityName = TableConverter.toJavaEntityName(table.getTableName());
-		String instanceName = StringUtil.firstToLowerCase(entityName);
+		String instanceName = StringUtils.firstToLowerCase(entityName);
 		StringBuilder content = new StringBuilder();
 		content.append("package ").append(rowMapperPackage).append(";\n\n");
 		content.append("import java.sql.ResultSet;\n");
@@ -39,7 +39,7 @@ public class RowMapperGenerator {
 			content.append("			").
 					append(instanceName).
 					append(".set").
-					append(StringUtil.firstToUpperCase(field.getFieldName())).
+					append(StringUtils.firstToUpperCase(field.getFieldName())).
 					append("(");
 			if(field.getFieldType().equals("java.util.Date")) {
 				content.append("rs.getDate(\"");
