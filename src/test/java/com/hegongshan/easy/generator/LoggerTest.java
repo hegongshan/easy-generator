@@ -5,10 +5,10 @@ import org.junit.Test;
 import com.hegongshan.easy.generator.log.Logger;
 
 public class LoggerTest {
-	private static final Logger LOG = new Logger();
+	private static final Logger LOG = new Logger(LoggerTest.class);
 	@Test
 	public void testInfo() {
-		LOG.info("你好");
+		LOG.info("你好{}");
 	}
 	
 	@Test

@@ -40,18 +40,27 @@ public class Template {
 		Matcher matcher = pattern.matcher(template);
 		String variable;
 		while(matcher.find()) {
-			variable = matcher.group();
-			String key = variable.substring(2,variable.length()-1).trim();//${  }
+			String key = null;
 			String value = null;
-			if(key.contains("?")) {
-				String[] arr = key.split("\\?");
-				if(arr[1].equals("firstToUpperCase")) {
-					value = StringUtils.firstToUpperCase(String.valueOf(data.get(arr[0])));
+			String group1 = matcher.group(1);
+			String group2 = matcher.group(2);
+			if(StringUtils.isNotEmpty(group1)) {
+				variable = group1;
+			} else if(StringUtils.isNotEmpty(group2)) {
+				variable = group2;
+				key = variable.substring(2,variable.length()-1).trim();//${  }
+				if(key.contains("?")) {
+					String[] arr = key.split("\\?");
+					if(arr[1].equals("firstToUpperCase")) {
+						value = StringUtils.firstToUpperCase(String.valueOf(data.get(arr[0])));
+					}else {
+						value = null;
+					}
+				} else {
+					value = String.valueOf(data.get(key));
 				}
-			} else {
-				value = String.valueOf(data.get(key));
+				matcher.appendReplacement(sb, value);
 			}
-			matcher.appendReplacement(sb, value);
 		}
 		matcher.appendTail(sb);
 		return sb.toString();

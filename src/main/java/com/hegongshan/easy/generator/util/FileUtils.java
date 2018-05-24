@@ -5,7 +5,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import com.hegongshan.easy.generator.log.Logger;
+
 public final class FileUtils {
+	
+	private static final Logger LOG = new Logger(FileUtils.class);
 	/**
 	 * 写实体类到指定包名下
 	 * @param packageName 实体类包名
@@ -31,7 +35,7 @@ public final class FileUtils {
 			out.write(content);
 			out.flush();
 		} catch (IOException e) {
-			new RuntimeException("[easy-generator]-写文件异常",e);
+			LOG.error("写文件异常",e);
 		} finally {
 			try {
 				out.close();

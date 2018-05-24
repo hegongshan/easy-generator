@@ -11,11 +11,13 @@ import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
-import com.hegongshan.easy.generator.util.PropertiesUtils;
+import com.hegongshan.easy.generator.Config;
 
 public class DefaultDataSource implements DataSource {
 	
-	public static final String DEFAULT_PORP = "easy.properties";
+	private static final com.hegongshan.easy.generator.log.Logger LOG = 
+			new com.hegongshan.easy.generator.log.Logger(DefaultDataSource.class);
+	
 	private static List<Connection> pool;
 	private int poolMinSize = 5;
 	private int poolMaxSize = 20;
@@ -24,25 +26,16 @@ public class DefaultDataSource implements DataSource {
 	private String username;
 	private String password;
 	
-	public DefaultDataSource(String propertiesName,boolean pooled) {
-		PropertiesUtils prop = new PropertiesUtils(propertiesName);
-		driverClassName = prop.getProperty("driverClassName");
-		url = prop.getProperty("url");
-		username = prop.getProperty("username");
-		password = prop.getProperty("password");
-		if(pooled) {
-			poolMinSize = Integer.parseInt(prop.getProperty("poolMinSize"));
-			poolMaxSize = Integer.parseInt(prop.getProperty("poolMaxSize"));
-		}
+	public DefaultDataSource(boolean pooled) {
+		driverClassName = Config.getDriverClassName();
+		url = Config.getUrl();
+		username = Config.getUsername();
+		password = Config.getPassword();
 		try {
 			init();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			LOG.error("数据库连接池初始化时发生异常",e);
 		}
-	}
-	
-	public DefaultDataSource(boolean pooled) {
-		this(DEFAULT_PORP,pooled);
 	}
 	
 	public DefaultDataSource() {
@@ -106,16 +99,12 @@ public class DefaultDataSource implements DataSource {
 				try {
 					connection.close();
 				} catch (SQLException e) {
-					e.printStackTrace();
+					LOG.error("关闭数据库连接时发生异常",e);
 				}
 			}
 		} else {
-			try {
-				if(!connection.isClosed()) {
-					pool.add(connection);
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
+			if(connection != null) {
+				pool.add(connection);
 			}
 		}
 	}
@@ -127,7 +116,7 @@ public class DefaultDataSource implements DataSource {
 		try {
 			Class.forName(driverClassName);
 		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+			LOG.error("找不到数据库驱动类",e);
 		}
 		while(pool.size() < poolMinSize) {
 			pool.add(DriverManager.getConnection(url, username, password));

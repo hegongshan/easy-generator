@@ -11,24 +11,27 @@ import java.util.Set;
 import com.hegongshan.easy.generator.Constants;
 import com.hegongshan.easy.generator.entity.Column;
 import com.hegongshan.easy.generator.entity.Table;
+import com.hegongshan.easy.generator.log.Logger;
 import com.hegongshan.easy.generator.util.JdbcUtils;
 import com.hegongshan.easy.generator.util.PropertiesUtils;
 import com.hegongshan.easy.generator.util.StringUtils;
 
 public class DatabaseParser {
+	
+	private static final Logger LOG = new Logger(DatabaseParser.class);
+	
 	private List<Table> tables;
 	
 	public DatabaseParser() {
 		try {
 			init();
 		} catch (Exception e) {
-			new RuntimeException("[easy-generator]-数据库解析异常",e);
+			LOG.error("数据库解析异常",e);
 		}
 	}
 	
 	private void init() throws Exception {
 		DatabaseMetaData dmd = JdbcUtils.getConnection().getMetaData();
-
 		tables = new ArrayList<Table>();
 		String tableNamePattern = null;
 		PropertiesUtils prop = new PropertiesUtils(Constants.DEFAULT_PROPERTIES);
@@ -50,7 +53,6 @@ public class DatabaseParser {
 			tableNamePattern = tableNames;
 			parse(dmd,tableNamePattern);
 		}
-		setTables(tables);
 		JdbcUtils.close();
 	}
 	
@@ -58,11 +60,9 @@ public class DatabaseParser {
 		ResultSet tableRS = dmd.getTables(null, null, tableNamePattern, new String[]{"TABLE"});
 		while(tableRS.next()) {
 			Table table = new Table();
-			String dbTable = tableRS.getString("TABLE_NAME");
-			String remarks = tableRS.getString("REMARKS");
-			ResultSet columnRS = dmd.getColumns(null, null, dbTable , "%");
-			table.setTableName(dbTable);
-			table.setRemarks(remarks);
+			table.setTableName(tableRS.getString("TABLE_NAME"));
+			table.setRemarks(tableRS.getString("REMARKS"));
+			ResultSet columnRS = dmd.getColumns(null, null, table.getTableName() , "%");
 			
 			Set<Column> columns = new LinkedHashSet<Column>();
 			while(columnRS.next()) {
@@ -79,9 +79,5 @@ public class DatabaseParser {
 
 	public List<Table> getTables() {
 		return tables;
-	}
-
-	public void setTables(List<Table> tables) {
-		this.tables = tables;
 	}
 }
